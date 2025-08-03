@@ -10,22 +10,37 @@ export default function ForgotPasswordPage({
   onBack,
 }: ForgotPasswordPageProps) {
   const [email, setEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+    
     setIsLoading(true);
     setError("");
 
     try {
-      const response = await apiService.forgotPassword({ email });
+      const response = await apiService.forgotPassword({ email, newPassword });
 
       if (response.success) {
         setIsSuccess(true);
       } else {
-        setError(response.message || "Failed to send reset email");
+        setError(response.message || "Failed to reset password");
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -43,33 +58,23 @@ export default function ForgotPasswordPage({
           </div>
 
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Check Your Email
+            Password Reset Successful
           </h2>
 
           <p className="text-gray-600 mb-6">
-            We've sent password reset instructions to <strong>{email}</strong>
+            Your password has been successfully reset for <strong>{email}</strong>
           </p>
 
           <p className="text-sm text-gray-500 mb-8">
-            Didn't receive the email? Check your spam folder or try again.
+            You can now login with your new password.
           </p>
 
           <div className="space-y-3">
             <button
-              onClick={() => {
-                setIsSuccess(false);
-                setEmail("");
-              }}
+              onClick={onBack}
               className="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors font-medium"
             >
-              Try Again
-            </button>
-
-            <button
-              onClick={onBack}
-              className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-            >
-              Back to Login
+              Go to Login
             </button>
           </div>
         </div>
@@ -137,11 +142,10 @@ export default function ForgotPasswordPage({
           {/* Header */}
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              Forgot Password
+              Reset Password
             </h2>
             <p className="text-gray-600">
-              Enter your email address and we'll send you instructions to reset
-              your password.
+              Enter your email address and new password to reset your account.
             </p>
           </div>
 
@@ -172,13 +176,75 @@ export default function ForgotPasswordPage({
               </div>
             </div>
 
+            {/* New Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                  placeholder="Enter new password"
+                  required
+                  disabled={isLoading}
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirm New Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                  placeholder="Confirm new password"
+                  required
+                  disabled={isLoading}
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
               className="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Sending..." : "Send Reset Instructions"}
+              {isLoading ? "Resetting..." : "Reset Password"}
             </button>
           </form>
 

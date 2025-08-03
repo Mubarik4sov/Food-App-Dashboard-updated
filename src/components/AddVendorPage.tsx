@@ -48,6 +48,11 @@ export default function AddVendorPage({ onBack }: AddVendorPageProps) {
       return;
     }
 
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      setIsLoading(false);
+      return;
+    }
     try {
       const signupData = {
         role_name: "Vendor",
@@ -69,7 +74,7 @@ export default function AddVendorPage({ onBack }: AddVendorPageProps) {
       const response = await apiService.signup(signupData);
 
       if (response.errorCode === 0) {
-        alert("Vendor added successfully!");
+        alert(`Vendor "${formData.name} ${formData.lastName}" added successfully!`);
         onBack();
       } else {
         setError(response.errorMessage || "Failed to create vendor");
