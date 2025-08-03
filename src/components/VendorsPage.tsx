@@ -11,6 +11,7 @@ import {
   Phone,
   MapPin,
 } from "lucide-react";
+import { apiService } from "../services/api";
 
 interface Vendor {
   id: string;
@@ -72,6 +73,39 @@ export default function VendorsPage({ onAddVendor }: VendorsPageProps) {
   const [vendors, setVendors] = useState<Vendor[]>(sampleVendors);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load vendors on component mount
+  React.useEffect(() => {
+    loadVendors();
+  }, []);
+
+  const loadVendors = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiService.getUsers({ role: "Vendor" });
+      if (response.errorCode === 0 && response.data) {
+        // Transform API data to match our interface
+        const transformedVendors = response.data.map((user) => ({
+          id: user.id.toString(),
+          name: `${user.first_name} ${user.last_name}`,
+          email: user.email,
+          phone: user.phone_number || "N/A",
+          address: `${user.street_address1 || ""} ${user.street_address2 || ""}, ${user.city || ""}, ${user.state || ""} ${user.zip_code || ""}`.trim(),
+          restaurantName: user.restaurant_name || "N/A",
+          joinDate: user.created_at.split('T')[0],
+          status: "active" as const, // Default to active
+          totalOrders: 0, // Default values since not in API
+          revenue: 0,
+        }));
+        setVendors(transformedVendors);
+      }
+    } catch (error) {
+      console.error("Failed to load vendors:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredVendors = vendors.filter(
     (vendor) =>
@@ -174,7 +208,12 @@ export default function VendorsPage({ onAddVendor }: VendorsPageProps) {
         {/* Vendors Table */}
         <div className="bg-white rounded-xl border border-gray-200">
           <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">All Vendors</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-800">All Vendors</h3>
+              {isLoading && (
+                <div className="text-sm text-gray-500">Loading...</div>
+              )}
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">

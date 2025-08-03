@@ -82,7 +82,7 @@ export default function OTPVerificationPage({
         inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      const errorMessage = error.message || "Verification failed";
+      const errorMessage = (error as Error).message || "Verification failed";
       setError(errorMessage);
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
@@ -107,7 +107,7 @@ export default function OTPVerificationPage({
         setError(response.message || "Failed to resend OTP");
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to resend OTP");
+      setError((error as Error).message || "Failed to resend OTP");
     } finally {
       setIsResending(false);
     }
