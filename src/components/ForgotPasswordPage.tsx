@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mail, ArrowLeft, CheckCircle, Utensils, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle, Utensils } from "lucide-react";
 import { apiService } from "../services/api";
 
 interface ForgotPasswordPageProps {

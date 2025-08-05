@@ -13,7 +13,6 @@ import {
   Save,
   ArrowLeft,
 } from "lucide-react";
-import { apiService } from "../services/api";
 
 interface Category {
   id: string;
@@ -108,36 +107,6 @@ export default function CategoriesPage() {
     mainImage: "",
     bannerImage: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  // Load categories on component mount
-  React.useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
-    try {
-      const response = await apiService.getAllCategories();
-      if (response.errorCode === 0 && response.data) {
-        // Transform API data to match our interface
-        const transformedCategories = response.data.map((cat) => ({
-          id: cat.id.toString(),
-          name: cat.categoryName,
-          parentId: cat.isSubCategory ? "1" : null, // Simplified for demo
-          parentName: cat.isSubCategory ? "Parent Category" : undefined,
-          mainImage: cat.coverImage || "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=300",
-          bannerImage: cat.coverImage || "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800",
-          status: "active" as const,
-          productsCount: 0,
-          createdDate: cat.created_at.split('T')[0],
-        }));
-        setCategories(transformedCategories);
-      }
-    } catch (error) {
-      console.error("Failed to load categories:", error);
-    }
-  };
 
   const filteredCategories = categories.filter(
     (category) =>
@@ -166,67 +135,28 @@ export default function CategoriesPage() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
+    const newCategory: Category = {
+      id: (categories.length + 1).toString(),
+      name: formData.name,
+      parentId: formData.isParent ? null : formData.parentId || null,
+      parentName: formData.isParent
+        ? undefined
+        : parentCategories.find((p) => p.id === formData.parentId)?.name,
+      mainImage:
+        formData.mainImage ||
+        "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=300",
+      bannerImage:
+        formData.bannerImage ||
+        "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800",
+      status: "active",
+      productsCount: 0,
+      createdDate: new Date().toISOString().split("T")[0],
+    };
 
-    try {
-      const categoryData = {
-        categoryName: formData.name,
-        isSubCategory: !formData.isParent,
-        longDescription: formData.longDescription,
-        shortDescription: formData.shortDescription,
-        coverImage: formData.mainImage || "/default-category.jpg",
-        parentCategoryIds: formData.isParent ? [] : [parseInt(formData.parentId)],
-      };
-
-      const response = await apiService.createUpdateCategory(categoryData);
-
-      if (response.errorCode === 0) {
-        // Reload categories to get updated list
-        await loadCategories();
-        setShowAddForm(false);
-        // Reset form
-        setFormData({
-          name: "",
-          shortDescription: "",
-          longDescription: "",
-          parentId: "",
-          isParent: true,
-          mainImage: "",
-          bannerImage: "",
-        });
-      } else {
-        setError(response.errorMessage || "Failed to create category");
-      }
-    } catch (error: any) {
-      setError(error.message || "An error occurred while creating category");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteCategory = async (categoryId: string) => {
-    if (!confirm("Are you sure you want to delete this category?")) {
-      return;
-    }
-
-    try {
-      const response = await apiService.deleteCategory({
-        categoryId: parseInt(categoryId),
-        parentCategoryId: 0,
-      });
-
-      if (response.success) {
-        // Reload categories to get updated list
-        await loadCategories();
-      } else {
-        alert("Failed to delete category");
-      }
-    } catch (error: any) {
-      alert(error.message || "An error occurred while deleting category");
-    }
+    setCategories([...categories, newCategory]);
+    setShowAddForm(false);
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -270,13 +200,6 @@ export default function CategoriesPage() {
         {/* Form */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
             {/* Category Information */}
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -294,7 +217,6 @@ export default function CategoriesPage() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                     placeholder="Enter category name"
                     required
-                    disabled={isLoading}
                   />
                 </div>
 
@@ -312,7 +234,6 @@ export default function CategoriesPage() {
                     placeholder="Enter short description (max 100 characters)"
                     maxLength={100}
                     required
-                    disabled={isLoading}
                   />
                 </div>
 
@@ -328,7 +249,6 @@ export default function CategoriesPage() {
                     rows={4}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                     placeholder="Enter detailed description of the category"
-                    disabled={isLoading}
                   />
                 </div>
 
@@ -342,7 +262,6 @@ export default function CategoriesPage() {
                         handleInputChange("isParent", e.target.checked)
                       }
                       className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                      disabled={isLoading}
                     />
                     <label
                       htmlFor="isParent"
@@ -364,7 +283,6 @@ export default function CategoriesPage() {
                         }
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                         required={!formData.isParent}
-                        disabled={isLoading}
                       >
                         <option value="">Select parent category</option>
                         {parentCategories.map((category) => (
@@ -453,17 +371,15 @@ export default function CategoriesPage() {
             <div className="flex space-x-4 pt-6">
               <button
                 type="submit"
-                disabled={isLoading}
-                className="bg-red-500 text-white px-8 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-red-500 text-white px-8 py-3 rounded-lg hover:bg-red-600 transition-colors flex items-center space-x-2 font-medium"
               >
                 <Save className="w-5 h-5" />
-                <span>{isLoading ? "Creating..." : "Create Category"}</span>
+                <span>Create Category</span>
               </button>
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                disabled={isLoading}
-                className="bg-gray-100 text-gray-700 px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gray-100 text-gray-700 px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
               >
                 Cancel
               </button>
@@ -636,10 +552,7 @@ export default function CategoriesPage() {
                     <Edit className="w-4 h-4" />
                     <span className="text-sm">Edit</span>
                   </button>
-                  <button 
-                    onClick={() => handleDeleteCategory(category.id)}
-                    className="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition-colors"
-                  >
+                  <button className="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
