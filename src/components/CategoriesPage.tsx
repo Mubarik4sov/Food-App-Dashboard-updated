@@ -117,7 +117,6 @@ export default function CategoriesPage() {
   }, []);
 
   const loadCategories = async () => {
-    setIsLoading(true);
     try {
       const response = await apiService.getAllCategories();
       if (response.errorCode === 0 && response.data) {
@@ -125,26 +124,18 @@ export default function CategoriesPage() {
         const transformedCategories = response.data.map((cat) => ({
           id: cat.id.toString(),
           name: cat.categoryName,
-          parentId: cat.isSubCategory && cat.parentCategories && cat.parentCategories.length > 0 
-            ? cat.parentCategories[0].id?.toString() 
-            : null,
-          parentName: cat.isSubCategory && cat.parentCategories && cat.parentCategories.length > 0 
-            ? cat.parentCategories[0].categoryName 
-            : undefined,
+          parentId: cat.isSubCategory ? "1" : null, // Simplified for demo
+          parentName: cat.isSubCategory ? "Parent Category" : undefined,
           mainImage: cat.coverImage || "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=300",
           bannerImage: cat.coverImage || "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800",
           status: "active" as const,
-          productsCount: cat.subCategories?.length || 0,
+          productsCount: 0,
           createdDate: cat.created_at.split('T')[0],
         }));
         setCategories(transformedCategories);
-      } else {
-        console.error("Failed to load categories:", response.errorMessage);
       }
     } catch (error) {
       console.error("Failed to load categories:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

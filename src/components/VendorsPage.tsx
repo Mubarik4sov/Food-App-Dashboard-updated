@@ -91,9 +91,7 @@ export default function VendorsPage({ onAddVendor }: VendorsPageProps) {
           name: `${user.first_name} ${user.last_name}`,
           email: user.email,
           phone: user.phone_number || "N/A",
-          address: [user.street_address1, user.street_address2, user.city, user.state, user.zip_code]
-            .filter(Boolean)
-            .join(", "),
+          address: `${user.street_address1 || ""} ${user.street_address2 || ""}, ${user.city || ""}, ${user.state || ""} ${user.zip_code || ""}`.trim(),
           restaurantName: user.restaurant_name || "N/A",
           joinDate: user.created_at.split('T')[0],
           status: "active" as const, // Default to active
@@ -101,8 +99,6 @@ export default function VendorsPage({ onAddVendor }: VendorsPageProps) {
           revenue: 0,
         }));
         setVendors(transformedVendors);
-      } else {
-        console.error("Failed to load vendors:", response.errorMessage);
       }
     } catch (error) {
       console.error("Failed to load vendors:", error);
